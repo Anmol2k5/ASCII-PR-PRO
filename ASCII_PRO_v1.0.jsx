@@ -1,5 +1,5 @@
 /**
- * ASCII PRO v1.0 - After Effects ScriptUI Plugin
+ * ASCII PRO v1.2 - After Effects ScriptUI Plugin
  * 
  * TO INSTALL: 
  * Copy to: Scripts/ScriptUI Panels/
@@ -8,7 +8,7 @@
 
 (function(thisObj) {
     function buildUI(container) {
-        var win = (container instanceof Panel) ? container : new Window("palette", "ASCII PRO v1.0", undefined, {resizeable: true});
+        var win = (container instanceof Panel) ? container : new Window("palette", "ASCII PRO v1.2", undefined, {resizeable: true});
         win.orientation = "column"; win.spacing = 10; win.margins = 16; win.alignChildren = ["fill", "top"];
 
         // Banner
@@ -32,7 +32,6 @@
         denSlider.onChanging = function() { denVal.text = Math.floor(denSlider.value); };
 
         var createBtn = win.add("button", undefined, "GENERATE ASCII EFFECT");
-        createBtn.graphics.backgroundColor = createBtn.graphics.newBrush(createBtn.graphics.BrushType.SOLID_COLOR, [0.2, 0.4, 0.8, 1]);
 
         createBtn.onClick = function() {
             var comp = app.project.activeItem;
@@ -127,7 +126,7 @@
             "} catch(e) { 0; }";
 
         txtLayer.moveBefore(ctrl);
-        alert("ASCII PRO V1.1 FIXED!\n\n1. Ensure your footage is layer #"+(txtLayer.index+1)+".\n2. If it's slow, lower 'Grid Density'.");
+        alert("ASCII PRO V1.2 FIXED!\n\n1. Ensure your footage is layer #"+(txtLayer.index+1)+".\n2. If it's slow, lower 'Grid Density'.");
     }
 
     var myPanel = buildUI(thisObj);
