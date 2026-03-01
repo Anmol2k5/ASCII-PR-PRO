@@ -1,0 +1,368 @@
+# ASCII PRO - End User License Agreement (EULA)
+
+**Version 2.0**
+**Effective Date: February 2026**
+
+---
+
+## 1. LICENSE GRANT
+
+This End User License Agreement ("Agreement") is between you (the "Licensee") and [Your Company Name] (the "Licensor") regarding your use of ASCII PRO software ("Software").
+
+By installing, copying, or using the Software, you agree to be bound by the terms of this Agreement.
+
+---
+
+## 2. LICENSE TYPES
+
+### 2.1 SINGLE USER LICENSE
+
+**Permits:**
+- Installation on one (1) computer workstation
+- Use by one (1) individual user
+- Commercial use in projects
+- Unlimited rendered outputs
+
+**Price:** $49 USD
+
+### 2.2 STUDIO LICENSE (Up to 5 Seats)
+
+**Permits:**
+- Installation on up to five (5) computer workstations
+- Use by up to five (5) individual users
+- Commercial use in projects
+- Unlimited rendered outputs
+- Priority email support
+
+**Price:** $199 USD
+
+### 2.3 ENTERPRISE LICENSE (Unlimited)
+
+**Permits:**
+- Installation on unlimited workstations within one organization
+- Use by unlimited users within one organization
+- Commercial use in projects
+- Unlimited rendered outputs
+- Priority support with dedicated account manager
+- Custom feature requests consideration
+
+**Price:** Contact for quote
+
+---
+
+## 3. PERMITTED USES
+
+You MAY:
+
+✅ Install the Software on authorized number of workstations
+✅ Use the Software to create content for personal projects
+✅ Use the Software to create content for commercial projects
+✅ Sell, distribute, or license content created using the Software
+✅ Use rendered outputs in stock footage libraries
+✅ Include rendered outputs in client deliverables
+✅ Create templates using rendered outputs (not the source script)
+✅ Make one backup copy for archival purposes
+
+---
+
+## 4. PROHIBITED USES
+
+You MAY NOT:
+
+❌ Share, distribute, sell, or transfer the Software to others
+❌ Rent, lease, or lend the Software
+❌ Reverse engineer, decompile, or disassemble the Software
+❌ Modify or create derivative works of the Software code
+❌ Remove or alter any proprietary notices or labels
+❌ Use the Software on more workstations than licensed
+❌ Share your license with others
+❌ Create competing products using the Software as a base
+❌ Include the Software (.jsx file) in templates or presets for sale
+
+---
+
+## 5. INTELLECTUAL PROPERTY
+
+### 5.1 Ownership
+
+The Software is licensed, not sold. Licensor retains all right, title, and interest in and to the Software, including all copyrights, patents, trade secrets, trademarks, and other intellectual property rights.
+
+### 5.2 Your Content
+
+You retain all rights to content created using the Software. The Licensor claims no ownership over your rendered outputs, projects, or creative works.
+
+### 5.3 Trademarks
+
+"ASCII PRO" and associated logos are trademarks of the Licensor. You may reference the Software in credits or marketing materials but may not imply endorsement without written permission.
+
+---
+
+## 6. UPDATES AND SUPPORT
+
+### 6.1 Updates
+
+- Minor updates and bug fixes are provided free to licensed users
+- Major version upgrades may require additional payment
+- Updates are provided "as is" with no guarantee of specific features
+- Licensee is responsible for downloading and installing updates
+
+### 6.2 Support
+
+**Single User License:**
+- Email support during business hours
+- Response within 48 hours
+- Access to documentation and tutorials
+
+**Studio License:**
+- Priority email support
+- Response within 24 hours
+- Access to documentation and tutorials
+- Beta access to new features
+
+**Enterprise License:**
+- Dedicated support contact
+- Response within 12 hours
+- Phone support available
+- Custom training sessions available
+- Beta access to new features
+
+---
+
+## 7. WARRANTY DISCLAIMER
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
+
+- MERCHANTABILITY
+- FITNESS FOR A PARTICULAR PURPOSE
+- NON-INFRINGEMENT
+- ERROR-FREE OPERATION
+
+Licensor does not warrant that the Software will meet your requirements or that operation will be uninterrupted or error-free.
+
+---
+
+## 8. LIMITATION OF LIABILITY
+
+IN NO EVENT SHALL LICENSOR BE LIABLE FOR:
+
+- LOSS OF PROFITS, DATA, OR BUSINESS
+- INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES
+- DAMAGES EXCEEDING THE AMOUNT PAID FOR THE LICENSE
+
+Even if Licensor has been advised of the possibility of such damages.
+
+Some jurisdictions do not allow limitation of liability, so the above may not fully apply to you.
+
+---
+
+## 9. TERM AND TERMINATION
+
+### 9.1 Term
+
+This license is perpetual unless terminated according to this Agreement.
+
+### 9.2 Termination by Licensee
+
+You may terminate by:
+- Ceasing all use of the Software
+- Destroying all copies in your possession
+
+### 9.3 Termination by Licensor
+
+Licensor may terminate if you:
+- Breach any term of this Agreement
+- Fail to pay applicable fees
+- Use the Software fraudulently
+
+### 9.4 Effect of Termination
+
+Upon termination:
+- You must cease all use of the Software
+- You must destroy all copies of the Software
+- Rendered content created before termination remains yours
+- No refund of fees paid
+
+---
+
+## 10. PAYMENT TERMS
+
+### 10.1 Pricing
+
+Current prices listed on: www.yourproduct.com/pricing
+
+Prices subject to change. Promotional pricing applies to purchase date only.
+
+### 10.2 Taxes
+
+Prices exclude applicable sales tax, VAT, or other government-imposed fees. You are responsible for all taxes.
+
+### 10.3 Refunds
+
+**30-Day Money-Back Guarantee:**
+- Full refund within 30 days of purchase
+- Must demonstrate good-faith attempt to use Software
+- Refund processed within 14 business days
+- Digital delivery only - no physical returns
+
+**After 30 Days:**
+- No refunds
+- Support available for technical issues
+
+---
+
+## 11. UPGRADES AND DOWNGRADES
+
+### 11.1 Upgrading License Type
+
+You may upgrade from Single to Studio or Enterprise at any time:
+- Pay difference in license cost
+- Immediate access to upgraded features
+- No refund of original license cost
+
+### 11.2 Downgrading License Type
+
+Downgrades not permitted except:
+- At license renewal (if applicable)
+- With written approval from Licensor
+
+---
+
+## 12. COMPLIANCE AND AUDIT
+
+Licensor reserves the right to:
+- Verify compliance with license terms
+- Request proof of license for each installation
+- Audit use with 30 days written notice
+
+Failure to comply may result in:
+- License termination
+- Legal action
+- Financial penalties
+
+---
+
+## 13. PRIVACY
+
+### 13.1 Data Collection
+
+The Software may collect:
+- Installation and activation data
+- Usage statistics (anonymous)
+- Error reports and crash logs
+- Performance metrics
+
+### 13.2 Data Use
+
+Collected data used for:
+- License verification
+- Product improvement
+- Customer support
+- Bug fixing
+
+### 13.3 Data Sharing
+
+We do not sell or share your data with third parties except:
+- As required by law
+- To process payments (payment processors only)
+- To provide support services
+
+---
+
+## 14. EXPORT CONTROLS
+
+The Software may be subject to export control laws. You agree to comply with all applicable laws and regulations.
+
+---
+
+## 15. GOVERNING LAW
+
+This Agreement is governed by the laws of [Your Jurisdiction], without regard to conflict of law principles.
+
+Any disputes shall be resolved in courts of [Your Jurisdiction].
+
+---
+
+## 16. ENTIRE AGREEMENT
+
+This Agreement constitutes the entire agreement between you and Licensor regarding the Software and supersedes all prior agreements.
+
+---
+
+## 17. AMENDMENTS
+
+Licensor may modify this Agreement:
+- With 30 days notice
+- Posted on: www.yourproduct.com/license
+- Continued use constitutes acceptance
+
+---
+
+## 18. SEVERABILITY
+
+If any provision is found invalid, the remaining provisions remain in full effect.
+
+---
+
+## 19. WAIVER
+
+Failure to enforce any right does not waive that right.
+
+---
+
+## 20. CONTACT INFORMATION
+
+**For Licensing Questions:**
+Email: licensing@yourproduct.com
+Phone: +1 (555) 123-4567
+
+**For Technical Support:**
+Email: support@yourproduct.com
+Website: www.yourproduct.com/support
+
+**For Business Inquiries:**
+Email: business@yourproduct.com
+
+**Mailing Address:**
+[Your Company Name]
+[Street Address]
+[City, State ZIP]
+[Country]
+
+---
+
+## ACCEPTANCE
+
+By clicking "I Agree," installing, or using the Software, you acknowledge that:
+
+✓ You have read this Agreement
+✓ You understand this Agreement
+✓ You agree to be bound by its terms and conditions
+✓ You have authority to enter into this Agreement
+
+If you do not agree, do not install or use the Software.
+
+---
+
+**Last Updated:** February 2026
+**Version:** 2.0
+**Software:** ASCII PRO
+
+© 2026 [Your Company Name]. All Rights Reserved.
+
+---
+
+## QUICK SUMMARY (Not Legally Binding)
+
+**You CAN:**
+- Use commercially ✅
+- Sell your videos ✅
+- Use in client work ✅
+- Install on licensed seats ✅
+
+**You CAN'T:**
+- Share the script file ❌
+- Use on extra computers ❌
+- Resell the tool ❌
+- Reverse engineer it ❌
+
+**Questions?** → licensing@yourproduct.com
