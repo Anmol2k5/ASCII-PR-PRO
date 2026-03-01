@@ -76,19 +76,22 @@
         textDoc.justification = ParagraphJustification.CENTER_JUSTIFY;
         textProp.setValue(textDoc);
 
-        // Source Text Expression (fills with spaces)
+        // Source Text Expression (fills with spaces correctly)
         textProp.expression = 
             "var d = thisComp.layer('"+ctrl.name+"').effect('Grid Density')('Slider');\n" +
             "var aspect = thisComp.width / thisComp.height;\n" +
             "var cols = Math.max(1, Math.floor(d));\n" +
             "var rows = Math.max(1, Math.floor(d / aspect));\n" +
-            "''.repeat(cols*rows).replace(/(.{' + cols + '})/g, '$1\\r');";
+            "// Use a safe limit to prevent crashes on high density\n" +
+            "var totalChars = Math.min(cols * rows, 30000);\n" +
+            "var s = ' '.repeat(totalChars);\n" +
+            "s.replace(new RegExp('(.{' + cols + '})', 'g'), '$1\\r');";
 
         // 3. Animator
         var animator = txtLayer.Text.Animators.addProperty("ADBE Text Animator");
         animator.name = "ASCII Engine";
         
-        // Use a large offset range (255) to allow mapping any character
+        // Use a large offset range (255)
         var offset = animator.Properties.addProperty("ADBE Text Character Offset");
         offset.setValue(255);
 
@@ -96,37 +99,35 @@
         var selector = animator.Selectors.addProperty("ADBE Text Expressible Selector");
         selector.name = "Luminosity Sampler";
         
-        // Mapping Expression
+        // Mapping Expression - Optimized to prevent crashes
         selector.property("Amount").expression = 
             "var ctrl = thisComp.layer('"+ctrl.name+"');\n" +
-            "var sets = [\" .:-=+*#%@\", \" 0123456789\", \" .:oO8@\", \" -_=+*#\", \" .'`^\\\",:;Il!i><~+_-?][}{1)(|\\\\/tfjrxnuvczMW&8%B@$\"];\n" +
             "var pIdx = Math.clamp(Math.floor(ctrl.effect('Preset (1-5)')('Slider'))-1, 0, 4);\n" +
+            "var sets = [\" .:-=+*#%@\", \" 0123456789\", \" .:oO8@\", \" -_=+*#\", \" .'`^\\\",:;Il!i><~+_-?][}{1)(|\\\\/tfjrxnuvczMW&8%B@$\"];\n" +
             "var charSet = sets[pIdx];\n" +
             "var contrast = ctrl.effect('Contrast')('Slider');\n" +
-            "var sourceLayer = thisComp.layer(index + 1);\n\n" +
-            "// Coord Mapping - Pixel Perfect\n" +
+            "var sourceLayer = thisComp.layer(index + 1);\n" +
+            "if (!sourceLayer || !sourceLayer.active) value;\n\n" +
+            "// Coord Mapping\n" +
             "var w = thisComp.width; var h = thisComp.height;\n" +
-            "var cols = Math.floor(ctrl.effect('Grid Density')('Slider'));\n" +
+            "var cols = Math.max(1, Math.floor(ctrl.effect('Grid Density')('Slider')));\n" +
             "var charW = w / cols;\n" +
-            "var charH = charW; // Square grid\n" +
             "var idx = textIndex - 1;\n" +
             "var x = (idx % cols) * charW + (charW/2);\n" +
-            "var y = Math.floor(idx / cols) * charH + (charH/2);\n\n" +
+            "var y = Math.floor(idx / cols) * charW + (charW/2);\n\n" +
+            "// Performance Guard: Sample logic\n" +
             "try {\n" +
-            "  var sample = sourceLayer.sampleImage([x, y], [2, 2]);\n" +
-            "  var lum = (sample[0] + sample[1] + sample[2]) / 3;\n" +
-            "  if (contrast != 1) lum = Math.pow(lum, 1/contrast);\n\n" +
+            "  if (x > w || y > h || x < 0 || y < 0) throw 0;\n" +
+            "  var s = sourceLayer.sampleImage([x, y], [1, 1]);\n" +
+            "  var lum = (s[0] + s[1] + s[2]) / 3;\n" +
+            "  if (contrast != 1) lum = Math.pow(Math.clamp(lum, 0.001, 1), 1/contrast);\n\n" +
             "  var targetIdx = Math.floor(lum * (charSet.length - 1));\n" +
-            "  var targetCode = charSet.charCodeAt(targetIdx);\n" +
-            "  var baseCode = 32; // Source is spaces (code 32)\n" +
-            "  \n" +
-            "  // Return as percentage of the Property Value (255)\n" +
-            "  var diff = targetCode - baseCode;\n" +
-            "  (diff / 255) * 100;\n" +
+            "  var targetCode = charSet.charCodeAt(Math.clamp(targetIdx, 0, charSet.length-1));\n" +
+            "  ((targetCode - 32) / 255) * 100;\n" +
             "} catch(e) { 0; }";
 
         txtLayer.moveBefore(ctrl);
-        alert("ASCII PRO GENERATED!\n\nMove your image layer directly below 'ASCII OUTPUT'.");
+        alert("ASCII PRO V1.1 FIXED!\n\n1. Ensure your footage is layer #"+(txtLayer.index+1)+".\n2. If it's slow, lower 'Grid Density'.");
     }
 
     var myPanel = buildUI(thisObj);
