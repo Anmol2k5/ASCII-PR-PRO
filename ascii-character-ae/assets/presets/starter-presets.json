@@ -1,0 +1,15 @@
+{
+  "plugin": "ASCII Character",
+  "version": "0.1.0",
+  "presets": [
+    {"name": "Classic ASCII", "characterSet": "Classic", "colorMode": "Monochrome", "foreground": "#ffffff", "background": "#000000", "pixelDensity": 90, "contrast": 1.15},
+    {"name": "White on Black", "characterSet": "Classic", "colorMode": "Monochrome", "foreground": "#ffffff", "background": "#000000", "pixelDensity": 100, "contrast": 1.2},
+    {"name": "Green Terminal", "characterSet": "Classic", "colorMode": "Gradient", "gradientStart": "#005023", "gradientEnd": "#a0ffb4", "background": "#000803", "pixelDensity": 95},
+    {"name": "Orange Terminal", "characterSet": "Classic", "colorMode": "Gradient", "gradientStart": "#962d00", "gradientEnd": "#ffd25f", "background": "#120800", "pixelDensity": 95},
+    {"name": "Blue Print", "characterSet": "Editorial", "colorMode": "Gradient", "gradientStart": "#1e509b", "gradientEnd": "#cdebff", "background": "#02122a", "pixelDensity": 110},
+    {"name": "High Contrast", "characterSet": "Dense", "colorMode": "Two Tone", "foreground": "#ffffff", "background": "#000000", "contrast": 1.6, "posterizeLevels": 5},
+    {"name": "Soft Minimal", "characterSet": "Minimal", "colorMode": "Gradient", "gradientStart": "#505055", "gradientEnd": "#ebebe1", "background": "#161618", "pixelDensity": 75, "contrast": 0.85},
+    {"name": "Block Characters", "characterSet": "Blocks", "colorMode": "Monochrome", "foreground": "#ffffff", "background": "#000000", "pixelDensity": 120},
+    {"name": "Original Colour ASCII", "characterSet": "Dense", "colorMode": "Original Source Colour", "background": "#000000", "pixelDensity": 105}
+  ]
+}
