@@ -95,6 +95,7 @@ if (ASCII_CHARACTER_BUILD_TESTS)
         plugin/src/Utilities.cpp
     )
     target_include_directories(test_color_controls PRIVATE plugin/include)
+    target_compile_definitions(test_color_controls PRIVATE TESTS_NO_AE_SDK=1)
     add_test(NAME test_color_controls COMMAND test_color_controls)
 
     add_executable(test_performance
