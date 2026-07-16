@@ -64,12 +64,15 @@ if (ASCII_CHARACTER_BUILD_PLUGIN)
 endif()
 
 if (ASCII_CHARACTER_BUILD_TESTS)
+    enable_testing()
+
     add_executable(render_engine_smoke
         tests/render_engine_smoke.cpp
         ${ASCII_CHARACTER_CORE}
     )
     target_include_directories(render_engine_smoke PRIVATE plugin/include)
     target_compile_definitions(render_engine_smoke PRIVATE TESTS_NO_AE_SDK=1)
+    add_test(NAME render_engine_smoke COMMAND render_engine_smoke)
 
     add_executable(test_pixel_adapter
         tests/unit/test_pixel_adapter.cpp
@@ -77,6 +80,7 @@ if (ASCII_CHARACTER_BUILD_TESTS)
     )
     target_include_directories(test_pixel_adapter PRIVATE plugin/include)
     target_compile_definitions(test_pixel_adapter PRIVATE TESTS_NO_AE_SDK=1)
+    add_test(NAME test_pixel_adapter COMMAND test_pixel_adapter)
 
     add_executable(test_grid_layout
         tests/unit/test_grid_layout.cpp
@@ -84,10 +88,12 @@ if (ASCII_CHARACTER_BUILD_TESTS)
     )
     target_include_directories(test_grid_layout PRIVATE plugin/include)
     target_compile_definitions(test_grid_layout PRIVATE TESTS_NO_AE_SDK=1)
+    add_test(NAME test_grid_layout COMMAND test_grid_layout)
 
     add_executable(test_color_controls
         tests/unit/test_color_controls.cpp
         plugin/src/Utilities.cpp
     )
     target_include_directories(test_color_controls PRIVATE plugin/include)
+    add_test(NAME test_color_controls COMMAND test_color_controls)
 endif()
