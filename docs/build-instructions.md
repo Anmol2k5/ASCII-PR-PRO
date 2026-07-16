@@ -21,7 +21,7 @@
 3. Configure the project:
 
    ```powershell
-   cd C:\Users\Mayur\Documents\Codex\2026-07-02\docsforadobe-after-effects-scripting-guide-https\outputs\ascii-character-ae
+   cd <path-to-repository-root>
    cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DAE_SDK_ROOT="C:\SDKs\Adobe\AfterEffectsSDK"
    ```
 

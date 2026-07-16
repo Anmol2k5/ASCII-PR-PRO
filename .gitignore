@@ -3,3 +3,5 @@ extracted_drfx/
 .gemini/
 /tmp/
 *.log
+build/
+*.mp4

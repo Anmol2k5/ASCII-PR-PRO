@@ -1,5 +1,5 @@
 /**
- * ASCII Effect Setup Script for After Effects - V3 (ULTRA COMPATIBLE)
+ * ASCII Effect Setup Script for After Effects - V4 (PRO & ROBUST)
  * 
  * INSTRUCTIONS:
  * 1. Open After Effects and a Composition.
@@ -13,7 +13,7 @@
         return;
     }
 
-    app.beginUndoGroup("Setup ASCII Effect V3");
+    app.beginUndoGroup("Setup ASCII Effect V4");
 
     try {
         // 1. Create a Controller Null
@@ -81,15 +81,19 @@
             "var sets = [\" .:-=+*#%@\", \" 0123456789\", \" .:oO8@\", \" -_=+*#\", \" .'`^\\\",:;Il!i><~+_-?][}{1)(|\\\\/tfjrxnuvczMW&8%B@$\"];\n" +
             "var charSet = sets[pIdx];\n" +
             "var contrast = ctrl.effect('Boost Contrast')('Slider');\n" +
-            "var sourceLayer = thisComp.layer(index + 1);\n\n" +
+            "var sourceLayer;\n" +
+            "try { sourceLayer = thisComp.layer(index + 1); } catch(e) { try { sourceLayer = thisComp.layer(1); } catch(e) { sourceLayer = null; } }\n\n" +
             "var w = thisComp.width; var h = thisComp.height;\n" +
-            "var cols = Math.floor(ctrl.effect('Grid Density')('Slider'));\n" +
+            "var cols = Math.max(1, Math.floor(ctrl.effect('Grid Density')('Slider')));\n" +
             "var x = ((textIndex-1) % cols) * (w/cols) + (w/cols/2);\n" +
-            "var y = Math.floor((textIndex-1) / cols) * (h/(cols/ (w/h))) + (h/(cols/(w/h))/2);\n\n" +
+            "var aspect = w/h;\n" +
+            "var rows = Math.max(1, Math.floor(cols / aspect));\n" +
+            "var y = Math.floor((textIndex-1) / cols) * (h/rows) + (h/rows/2);\n\n" +
             "try {\n" +
+            "  if (!sourceLayer || !sourceLayer.active) throw 'No Source';\n" +
             "  var sample = sourceLayer.sampleImage([x, y], [2, 2]);\n" +
-            "  var lum = (sample[0] + sample[1] + sample[2]) / 3;\n" +
-            "  if (contrast != 1) lum = Math.pow(lum, 1/contrast);\n" +
+            "  var lum = (sample[0] * 0.299 + sample[1] * 0.587 + sample[2] * 0.114);\n" +
+            "  if (contrast != 1) lum = Math.pow(Math.clamp(lum, 0.001, 1), 1/contrast);\n" +
             "  var targetIdx = Math.floor(lum * (charSet.length - 1));\n" +
             "  targetIdx = Math.clamp(targetIdx, 0, charSet.length-1);\n" +
             "  charSet.charCodeAt(targetIdx) - 32;\n" +
@@ -97,7 +101,7 @@
 
         txtLayer.moveBefore(ctrl);
         
-        alert("ASCII Setup V3 SUCCESS!\n\n1. Place your footage layer directly BELOW 'ASCII Output'.\n2. Use 'ASCII CONTROLLER' to adjust result.");
+        alert("ASCII Setup V4 SUCCESS!\n\n1. Place your footage layer directly BELOW 'ASCII Output'.\n2. Use 'ASCII CONTROLLER' to adjust result.");
 
     } catch (err) {
         alert("FATAL ERROR: " + err.message + " (Line: " + err.line + ")");

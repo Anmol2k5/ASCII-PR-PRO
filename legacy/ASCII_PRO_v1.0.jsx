@@ -1,5 +1,5 @@
 /**
- * ASCII PRO v1.3 - After Effects ScriptUI Plugin
+ * ASCII PRO v1.5 - After Effects ScriptUI Plugin
  * 
  * TO INSTALL: 
  * Copy to: Scripts/ScriptUI Panels/
@@ -8,7 +8,7 @@
 
 (function(thisObj) {
     function buildUI(container) {
-        var win = (container instanceof Panel) ? container : new Window("palette", "ASCII PRO v1.3", undefined, {resizeable: true});
+        var win = (container instanceof Panel) ? container : new Window("palette", "ASCII PRO v1.5", undefined, {resizeable: true});
         win.orientation = "column"; win.spacing = 10; win.margins = 16; win.alignChildren = ["fill", "top"];
 
         // Banner
@@ -31,17 +31,21 @@
         denVal.characters = 3;
         denSlider.onChanging = function() { denVal.text = Math.floor(denSlider.value); };
 
+        var colGroup = settingsPanel.add("group");
+        var colorCheckbox = colGroup.add("checkbox", undefined, "Inherit Source Color");
+        colorCheckbox.value = false;
+
         var createBtn = win.add("button", undefined, "GENERATE ASCII EFFECT");
 
         createBtn.onClick = function() {
             var comp = app.project.activeItem;
             if (!(comp instanceof CompItem)) { alert("Please select a composition."); return; }
             
-            app.beginUndoGroup("Generate ASCII PRO V1.3");
+            app.beginUndoGroup("Generate ASCII PRO V1.5");
             try {
                 // Find selected layer to use as source
                 var sourceLayer = (comp.selectedLayers.length > 0) ? comp.selectedLayers[0] : null;
-                generateEffect(comp, Math.floor(denSlider.value), charDropdown.selection.index, sourceLayer);
+                generateEffect(comp, Math.floor(denSlider.value), charDropdown.selection.index, sourceLayer, colorCheckbox.value);
             } catch(e) { alert("Error: " + e.message + " (line " + e.line + ")"); }
             app.endUndoGroup();
         };
@@ -50,7 +54,7 @@
         return win;
     }
 
-    function generateEffect(comp, density, setIdx, sourceLayer) {
+    function generateEffect(comp, density, setIdx, sourceLayer, useColor) {
         // 1. Controller
         var ctrl = comp.layers.addNull();
         ctrl.name = "ASCII PRO CONTROLLER";
@@ -126,17 +130,43 @@
             "var y = Math.floor(idx / cols) * charW + (charW/2);\n\n" +
             "try {\n" +
             "  var s = sourceLayer.sampleImage([x, y], [1, 1]);\n" +
-            "  var lum = (s[0] + s[1] + s[2]) / 3;\n" +
+            "  var lum = (s[0] * 0.299 + s[1] * 0.587 + s[2] * 0.114);\n" +
             "  if (contrast != 1) lum = Math.pow(Math.clamp(lum, 0.001, 1), 1/contrast);\n\n" +
             "  var targetIdx = Math.floor(lum * (charSet.length - 1));\n" +
             "  var targetCode = charSet.charCodeAt(Math.clamp(targetIdx, 0, charSet.length-1));\n" +
             "  ((targetCode - 32) / 255) * 100;\n" +
             "} catch(e) { 0; }";
 
+        // 4. Color Sampler (Optional)
+        if (useColor) {
+            var colorAnimator = txtLayer.Text.Animators.addProperty("ADBE Text Animator");
+            colorAnimator.name = "Color Engine";
+            var fillColor = colorAnimator.Properties.addProperty("ADBE Text Fill Color");
+            
+            var colorSelector = colorAnimator.Selectors.addProperty("ADBE Text Expressible Selector");
+            colorSelector.name = "Color Sampler";
+            colorSelector.property("Amount").expression = "100"; // Always 100% influence
+            
+            fillColor.expression = 
+                "var ctrl = thisComp.layer('" + ctrl.name + "');\n" +
+                "var sourceName = '" + sourceName + "';\n" +
+                "var sourceLayer;\n" +
+                "try { sourceLayer = thisComp.layer(sourceName); } catch(e) { sourceLayer = thisComp.layer(index + 1); }\n" +
+                "if (sourceLayer.name == ctrl.name) sourceLayer = thisComp.layer(index + 2);\n" +
+                "if (!sourceLayer || !sourceLayer.active) value;\n\n" +
+                "var w = thisComp.width;\n" +
+                "var cols = Math.max(1, Math.floor(ctrl.effect('Grid Density')('Slider')));\n" +
+                "var charW = w / cols;\n" +
+                "var idx = textIndex - 1;\n" +
+                "var x = (idx % cols) * charW + (charW/2);\n" +
+                "var y = Math.floor(idx / cols) * charW + (charW/2);\n" +
+                "sourceLayer.sampleImage([x, y], [1, 1]);";
+        }
+
         txtLayer.moveBefore(ctrl);
         if (sourceLayer) txtLayer.moveBefore(sourceLayer);
 
-        alert("ASCII PRO V1.3 SUCCESS!\n\n1. Target Layer Linked: " + sourceName + "\n2. Adjust settings on 'ASCII PRO CONTROLLER'.");
+        alert("ASCII PRO V1.5 SUCCESS!\n\n1. Target Layer Linked: " + sourceName + "\n2. Adjust settings on 'ASCII PRO CONTROLLER'.");
     }
 
     var myPanel = buildUI(thisObj);
