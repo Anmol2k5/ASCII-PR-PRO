@@ -84,4 +84,10 @@ if (ASCII_CHARACTER_BUILD_TESTS)
     )
     target_include_directories(test_grid_layout PRIVATE plugin/include)
     target_compile_definitions(test_grid_layout PRIVATE TESTS_NO_AE_SDK=1)
+
+    add_executable(test_color_controls
+        tests/unit/test_color_controls.cpp
+        plugin/src/Utilities.cpp
+    )
+    target_include_directories(test_color_controls PRIVATE plugin/include)
 endif()

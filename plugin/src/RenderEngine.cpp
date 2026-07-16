@@ -2,6 +2,7 @@
 #include "GlyphAtlas.h"
 #include "PixelAdapter.h"
 #include "GridLayout.h"
+#include "Utilities.h"
 
 #include <algorithm>
 #include <cmath>
@@ -211,6 +212,19 @@ void RenderEngine::render8(const Image8& input, Image8& output, const RenderSett
                 sourceAverage.a = alphaMax;
             }
 
+            if (settings.colorMode == ColorMode::Source && count > 0) {
+                float h = 0.0f, s = 0.0f, v = 0.0f;
+                rgbToHsv(sourceAverage.r, sourceAverage.g, sourceAverage.b, h, s, v);
+                h += settings.hueShiftDegrees;
+                h = std::fmod(h, 360.0f);
+                if (h < 0.0f) {
+                    h += 360.0f;
+                }
+                s *= settings.saturation;
+                s = std::max(0.0f, std::min(1.0f, s));
+                hsvToRgb(h, s, v, sourceAverage.r, sourceAverage.g, sourceAverage.b);
+            }
+
             float rawLum = count > 0 ? lumSum / count : 0.0f;
             float lum = adjustLuminance(rawLum, settings);
             float ordered = settings.order == CharacterOrder::DarkToLight ? lum : 1.0f - lum;
@@ -225,7 +239,7 @@ void RenderEngine::render8(const Image8& input, Image8& output, const RenderSett
 
             LinearRgba base = (settings.colorMode == ColorMode::CustomForegroundBackground) 
                 ? bg 
-                : LinearRgba {0.0f, 0.0f, 0.0f, settings.preserveSourceAlpha ? sourceAverage.a : 1.0f};
+                : LinearRgba {0.0f, 0.0f, 0.0f, 0.0f};
 
             // Draw glyph relative to layout position
             int drawX = static_cast<int>(std::round(x0));
