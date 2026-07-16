@@ -1,0 +1,2 @@
+// resource.h
+#pragma once

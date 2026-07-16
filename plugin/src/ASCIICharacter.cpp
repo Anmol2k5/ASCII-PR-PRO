@@ -9,11 +9,13 @@
 #include "AE_Effect.h"
 #include "AE_EffectCB.h"
 #include "AE_EffectCBSuites.h"
+#include "AE_Macros.h"
 #include "Param_Utils.h"
+
 
 using namespace ascii_character;
 
-static PF_Err about(PF_InData*, PF_OutData* out_data) {
+static PF_Err about(PF_InData* in_data, PF_OutData* out_data) {
     PF_SPRINTF(out_data->return_msg,
         "%s v%d.%d - native luminance-to-ASCII renderer. Development build.",
         ASCII_CHARACTER_PLUGIN_NAME,
@@ -22,7 +24,7 @@ static PF_Err about(PF_InData*, PF_OutData* out_data) {
     return PF_Err_NONE;
 }
 
-static PF_Err globalSetup(PF_InData*, PF_OutData* out_data) {
+static PF_Err globalSetup(PF_InData* in_data, PF_OutData* out_data) {
     out_data->my_version = PF_VERSION(
         ASCII_CHARACTER_MAJOR_VERSION,
         ASCII_CHARACTER_MINOR_VERSION,
@@ -34,7 +36,7 @@ static PF_Err globalSetup(PF_InData*, PF_OutData* out_data) {
     return PF_Err_NONE;
 }
 
-static PF_Err paramsSetup(PF_InData*, PF_OutData* out_data) {
+static PF_Err paramsSetup(PF_InData* in_data, PF_OutData* out_data) {
     PF_Err err = PF_Err_NONE;
     PF_ParamDef def;
 

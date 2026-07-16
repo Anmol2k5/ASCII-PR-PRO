@@ -175,7 +175,7 @@ void RenderEngine::render8(const Image8& input, Image8& output, const RenderSett
             if (settings.preserveSourceAlpha) {
                 ink.a = sourceAverage.a;
             }
-            Pixel8 base = settings.colorMode == ColorMode::CustomForegroundBackground ? settings.background : Pixel8 {0, 0, 0, settings.preserveSourceAlpha ? sourceAverage.a : 255};
+            Pixel8 base = settings.colorMode == ColorMode::CustomForegroundBackground ? settings.background : Pixel8 {0, 0, 0, static_cast<uint8_t>(settings.preserveSourceAlpha ? sourceAverage.a : 255)};
             drawGlyph(output, x, y, cellW, cellH, ramp[charIndex], ink, base, settings);
         }
     }

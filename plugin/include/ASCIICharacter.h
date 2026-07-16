@@ -1,7 +1,7 @@
 #pragma once
 
 #define ASCII_CHARACTER_PLUGIN_NAME "ASCII Character"
-#define ASCII_CHARACTER_MATCH_NAME "com.codex.ascii-character"
+#define ASCII_CHARACTER_MATCH_NAME "com.anmolsaini.ascii-character"
 #define ASCII_CHARACTER_MAJOR_VERSION 0
 #define ASCII_CHARACTER_MINOR_VERSION 1
 #define ASCII_CHARACTER_BUG_VERSION 0
