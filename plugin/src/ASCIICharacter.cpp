@@ -4,11 +4,13 @@
 #include "Parameters.h"
 #include "RenderEngine.h"
 
+#include "PixelAdapter.h"
 #include "AEConfig.h"
 #include "entry.h"
 #include "AE_Effect.h"
 #include "AE_EffectCB.h"
 #include "AE_EffectCBSuites.h"
+#include "AE_EffectPixelFormat.h"
 #include "AE_Macros.h"
 #include "Param_Utils.h"
 
@@ -31,8 +33,8 @@ static PF_Err globalSetup(PF_InData* in_data, PF_OutData* out_data) {
         ASCII_CHARACTER_BUG_VERSION,
         ASCII_CHARACTER_STAGE,
         ASCII_CHARACTER_BUILD_VERSION);
-    out_data->out_flags = 0;
-    out_data->out_flags2 = 0;
+    out_data->out_flags = PF_OutFlag_DEEP_COLOR_AWARE;
+    out_data->out_flags2 = PF_OutFlag2_SUPPORTS_SMART_RENDER | PF_OutFlag2_FLOAT_COLOR_AWARE;
     return PF_Err_NONE;
 }
 
@@ -152,6 +154,195 @@ static RenderSettings settingsFromParams(PF_ParamDef* params[]) {
     return s;
 }
 
+static RenderSettings settingsFromSmartRender(PF_InData* in_data) {
+    RenderSettings s;
+
+    auto checkoutSlider = [&](int id) -> int {
+        PF_ParamDef p;
+        AEFX_CLR_STRUCT(p);
+        if (PF_CHECKOUT_PARAM(in_data, id, in_data->current_time, in_data->time_step, in_data->time_scale, &p) == PF_Err_NONE) {
+            int val = p.u.sd.value;
+            PF_CHECKIN_PARAM(in_data, &p);
+            return val;
+        }
+        return 0;
+    };
+
+    auto checkoutFloat = [&](int id) -> float {
+        PF_ParamDef p;
+        AEFX_CLR_STRUCT(p);
+        if (PF_CHECKOUT_PARAM(in_data, id, in_data->current_time, in_data->time_step, in_data->time_scale, &p) == PF_Err_NONE) {
+            float val = p.u.fs_d.value / 100.0f;
+            PF_CHECKIN_PARAM(in_data, &p);
+            return val;
+        }
+        return 0.0f;
+    };
+
+    auto checkoutCheckbox = [&](int id) -> bool {
+        PF_ParamDef p;
+        AEFX_CLR_STRUCT(p);
+        if (PF_CHECKOUT_PARAM(in_data, id, in_data->current_time, in_data->time_step, in_data->time_scale, &p) == PF_Err_NONE) {
+            bool val = p.u.bd.value != 0;
+            PF_CHECKIN_PARAM(in_data, &p);
+            return val;
+        }
+        return false;
+    };
+
+    auto checkoutPopup = [&](int id) -> int {
+        PF_ParamDef p;
+        AEFX_CLR_STRUCT(p);
+        if (PF_CHECKOUT_PARAM(in_data, id, in_data->current_time, in_data->time_step, in_data->time_scale, &p) == PF_Err_NONE) {
+            int val = p.u.pd.value;
+            PF_CHECKIN_PARAM(in_data, &p);
+            return val;
+        }
+        return 1;
+    };
+
+    auto checkoutColor = [&](int id) -> Pixel8 {
+        PF_ParamDef p;
+        AEFX_CLR_STRUCT(p);
+        if (PF_CHECKOUT_PARAM(in_data, id, in_data->current_time, in_data->time_step, in_data->time_scale, &p) == PF_Err_NONE) {
+            Pixel8 val = {
+                static_cast<uint8_t>(p.u.cd.value.red),
+                static_cast<uint8_t>(p.u.cd.value.green),
+                static_cast<uint8_t>(p.u.cd.value.blue),
+                255
+            };
+            PF_CHECKIN_PARAM(in_data, &p);
+            return val;
+        }
+        return {255, 255, 255, 255};
+    };
+
+    auto checkoutAngle = [&](int id) -> float {
+        PF_ParamDef p;
+        AEFX_CLR_STRUCT(p);
+        if (PF_CHECKOUT_PARAM(in_data, id, in_data->current_time, in_data->time_step, in_data->time_scale, &p) == PF_Err_NONE) {
+            float val = p.u.ad.value / 65536.0f;
+            PF_CHECKIN_PARAM(in_data, &p);
+            return val;
+        }
+        return 0.0f;
+    };
+
+    s.pixelDensity = checkoutSlider(PARAM_PIXEL_DENSITY);
+    s.cellAspectRatio = checkoutFloat(PARAM_CELL_ASPECT);
+    s.characterScale = checkoutFloat(PARAM_CHARACTER_SCALE);
+    s.spacingX = checkoutFloat(PARAM_SPACING_X);
+    s.spacingY = checkoutFloat(PARAM_SPACING_Y);
+    s.blendWithOriginal = checkoutFloat(PARAM_BLEND_ORIGINAL);
+    s.preserveSourceAlpha = checkoutCheckbox(PARAM_PRESERVE_ALPHA);
+    s.invertLuminance = checkoutCheckbox(PARAM_INVERT_LUMINANCE);
+    s.contrast = checkoutFloat(PARAM_CONTRAST);
+    s.brightness = checkoutFloat(PARAM_BRIGHTNESS);
+    s.gamma = checkoutFloat(PARAM_GAMMA);
+    s.threshold = checkoutSlider(PARAM_THRESHOLD);
+    s.posterizeLevels = checkoutSlider(PARAM_POSTERIZE);
+    
+    int charSetIdx = checkoutPopup(PARAM_CHARACTER_SET);
+    s.characterSet = characterSetByIndex(charSetIdx, "");
+    
+    int orderIdx = checkoutPopup(PARAM_CHARACTER_ORDER);
+    s.order = orderIdx == 1 ? CharacterOrder::DarkToLight : CharacterOrder::LightToDark;
+    
+    s.colorMode = static_cast<ColorMode>(checkoutPopup(PARAM_COLOR_MODE) - 1);
+    s.foreground = checkoutColor(PARAM_FOREGROUND);
+    s.background = checkoutColor(PARAM_BACKGROUND);
+    s.gradientStart = checkoutColor(PARAM_GRADIENT_START);
+    s.gradientEnd = checkoutColor(PARAM_GRADIENT_END);
+    s.saturation = checkoutFloat(PARAM_SATURATION);
+    
+    s.horizontalAlign = static_cast<GridAlignHorizontal>(checkoutPopup(PARAM_HORIZONTAL_ALIGN) - 1);
+    s.verticalAlign = static_cast<GridAlignVertical>(checkoutPopup(PARAM_VERTICAL_ALIGN) - 1);
+    s.offsetX = checkoutSlider(PARAM_OFFSET_X);
+    s.offsetY = checkoutSlider(PARAM_OFFSET_Y);
+    s.rotationDegrees = checkoutAngle(PARAM_ROTATION);
+    s.quality = static_cast<Quality>(checkoutPopup(PARAM_QUALITY) - 1);
+    s.antiAlias = checkoutCheckbox(PARAM_ANTIALIAS);
+    s.renderEveryNthCell = checkoutSlider(PARAM_NTH_CELL);
+
+    return s;
+}
+
+static PF_Err preRender(PF_InData* in_data, PF_OutData* out_data, PF_PreRenderExtra* extra) {
+    PF_Err err = PF_Err_NONE;
+    PF_RenderRequest req = extra->input->output_request;
+    PF_CheckoutResult result;
+
+    err = extra->cb->checkout_layer(in_data->effect_ref,
+                                    PARAM_INPUT,
+                                    PARAM_INPUT,
+                                    &req,
+                                    in_data->current_time,
+                                    in_data->time_step,
+                                    in_data->time_scale,
+                                    &result);
+    if (err != PF_Err_NONE) return err;
+
+    extra->output->result_rect = result.result_rect;
+    extra->output->max_result_rect = result.max_result_rect;
+
+    return err;
+}
+
+static PF_Err smartRender(PF_InData* in_data, PF_OutData* out_data, PF_SmartRenderExtra* extra) {
+    PF_Err err = PF_Err_NONE;
+    PF_EffectWorld* input_world = nullptr;
+    PF_EffectWorld* output_world = nullptr;
+
+    err = extra->cb->checkout_layer_pixels(in_data->effect_ref, PARAM_INPUT, &input_world);
+    if (err != PF_Err_NONE) return err;
+
+    err = extra->cb->checkout_output(in_data->effect_ref, &output_world);
+    if (err != PF_Err_NONE) return err;
+
+    PF_PixelFormat pixelFormat = PF_PixelFormat_INVALID;
+    PF_WorldSuite2* world_suite = nullptr;
+    
+    if (in_data->pica_basicP) {
+        in_data->pica_basicP->AcquireSuite(kPFWorldSuite, kPFWorldSuiteVersion2, (const void**)&world_suite);
+    }
+    
+    HostPixelFormat format = HostPixelFormat::Argb8;
+    if (world_suite) {
+        world_suite->PF_GetPixelFormat(input_world, &pixelFormat);
+        in_data->pica_basicP->ReleaseSuite(kPFWorldSuite, kPFWorldSuiteVersion2);
+        
+        if (pixelFormat == PF_PixelFormat_ARGB64) {
+            format = HostPixelFormat::Argb16;
+        } else if (pixelFormat == PF_PixelFormat_ARGB128) {
+            format = HostPixelFormat::Argb32Float;
+        }
+    }
+
+    RenderSettings settings = settingsFromSmartRender(in_data);
+    RenderEngine engine;
+
+    ImageView inView {
+        input_world->width,
+        input_world->height,
+        input_world->rowbytes,
+        input_world->data
+    };
+    ImageView outView {
+        output_world->width,
+        output_world->height,
+        output_world->rowbytes,
+        output_world->data
+    };
+
+    auto reader = createReader(format, inView);
+    auto writer = createWriter(format, outView);
+    if (reader && writer) {
+        engine.render(*reader, *writer, settings);
+    }
+
+    return PF_Err_NONE;
+}
+
 static PF_Err render(PF_InData*, PF_OutData*, PF_ParamDef* params[], PF_LayerDef* output) {
     const PF_LayerDef* input = &params[PARAM_INPUT]->u.ld;
     RenderSettings settings = settingsFromParams(params);
@@ -191,6 +382,10 @@ extern "C" DllExport PF_Err EffectMain(
             return paramsSetup(in_data, out_data);
         case PF_Cmd_RENDER:
             return render(in_data, out_data, params, output);
+        case PF_Cmd_SMART_PRE_RENDER:
+            return preRender(in_data, out_data, reinterpret_cast<PF_PreRenderExtra*>(output));
+        case PF_Cmd_SMART_RENDER:
+            return smartRender(in_data, out_data, reinterpret_cast<PF_SmartRenderExtra*>(output));
         default:
             return PF_Err_NONE;
         }

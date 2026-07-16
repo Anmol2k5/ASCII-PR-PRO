@@ -5,9 +5,20 @@
 
 #ifdef TESTS_NO_AE_SDK
 typedef unsigned char A_u_char;
+typedef unsigned short A_u_short;
+typedef float PF_FpShort;
+
 typedef struct {
     A_u_char alpha, red, green, blue;
 } PF_Pixel8;
+
+typedef struct {
+    A_u_short alpha, red, green, blue;
+} PF_Pixel16;
+
+typedef struct {
+    PF_FpShort alpha, red, green, blue;
+} PF_Pixel32;
 #endif
 
 namespace ascii_character {
@@ -30,6 +41,7 @@ class PixelWriter {
 public:
     virtual ~PixelWriter() = default;
     virtual void write(int x, int y, const LinearRgba& pixel) = 0;
+    virtual LinearRgba read(int x, int y) const = 0;
     virtual int width() const = 0;
     virtual int height() const = 0;
 };

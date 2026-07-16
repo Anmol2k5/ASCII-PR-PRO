@@ -124,10 +124,69 @@ void testAlphaHandling() {
     std::cout << "testAlphaHandling passed\n";
 }
 
+void testDeepColorAdapters() {
+    // Test 16-bpc
+    PF_Pixel16 pixel16;
+    pixel16.alpha = 32768;
+    pixel16.red = 32768;
+    pixel16.green = 0;
+    pixel16.blue = 16384; // 50% blue
+
+    ImageView view16 { 1, 1, 8, &pixel16 };
+    auto reader16 = createReader(HostPixelFormat::Argb16, view16);
+    assert(reader16 != nullptr);
+
+    LinearRgba color16 = reader16->read(0, 0);
+    assert(floatNear(color16.r, 1.0f));
+    assert(floatNear(color16.g, 0.0f));
+    assert(floatNear(color16.b, 0.5f));
+    assert(floatNear(color16.a, 1.0f));
+
+    auto writer16 = createWriter(HostPixelFormat::Argb16, view16);
+    assert(writer16 != nullptr);
+    writer16->write(0, 0, LinearRgba{ 0.0f, 1.0f, 0.25f, 0.5f });
+
+    // Output should be premultiplied: alpha = 16384, red = 0, green = 16384, blue = 16384 * 0.25 = 4096
+    assert(pixel16.alpha == 16384);
+    assert(pixel16.red == 0);
+    assert(pixel16.green == 16384);
+    assert(pixel16.blue == 4096);
+
+    // Test 32-bpc
+    PF_Pixel32 pixel32;
+    pixel32.alpha = 1.0f;
+    pixel32.red = 1.0f;
+    pixel32.green = 0.0f;
+    pixel32.blue = 0.5f;
+
+    ImageView view32 { 1, 1, 16, &pixel32 };
+    auto reader32 = createReader(HostPixelFormat::Argb32Float, view32);
+    assert(reader32 != nullptr);
+
+    LinearRgba color32 = reader32->read(0, 0);
+    assert(floatNear(color32.r, 1.0f));
+    assert(floatNear(color32.g, 0.0f));
+    assert(floatNear(color32.b, 0.5f));
+    assert(floatNear(color32.a, 1.0f));
+
+    auto writer32 = createWriter(HostPixelFormat::Argb32Float, view32);
+    assert(writer32 != nullptr);
+    writer32->write(0, 0, LinearRgba{ 0.0f, 1.0f, 0.25f, 0.5f });
+
+    // Output should be premultiplied: alpha = 0.5, red = 0.0, green = 0.5, blue = 0.125
+    assert(floatNear(pixel32.alpha, 0.5f));
+    assert(floatNear(pixel32.red, 0.0f));
+    assert(floatNear(pixel32.green, 0.5f));
+    assert(floatNear(pixel32.blue, 0.125f));
+
+    std::cout << "testDeepColorAdapters passed\n";
+}
+
 int main() {
     testColorRouting();
     testRowPadding();
     testAlphaHandling();
+    testDeepColorAdapters();
     std::cout << "All PixelAdapter unit tests passed!\n";
     return 0;
 }

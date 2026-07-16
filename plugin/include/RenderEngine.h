@@ -69,6 +69,7 @@ class PixelReader;
 class RenderEngine {
 public:
     void render8(const Image8& input, Image8& output, const RenderSettings& settings) const;
+    void render(PixelReader& reader, PixelWriter& writer, const RenderSettings& settings) const;
 
 private:
     static float luminance(const LinearRgba& pixel);

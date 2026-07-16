@@ -109,27 +109,34 @@ void RenderEngine::render8(const Image8& input, Image8& output, const RenderSett
         return;
     }
 
+    render(*reader, *writer, settings);
+}
+
+void RenderEngine::render(PixelReader& reader, PixelWriter& writer, const RenderSettings& settings) const {
     // Convert settings colors to linear
     LinearRgba fg = toLinear(settings.foreground);
     LinearRgba bg = toLinear(settings.background);
     LinearRgba gStart = toLinear(settings.gradientStart);
     LinearRgba gEnd = toLinear(settings.gradientEnd);
 
+    int imageW = reader.width();
+    int imageH = reader.height();
+
     // Initialize layout
-    GridLayout layout(input.width, input.height, settings);
+    GridLayout layout(imageW, imageH, settings);
 
     // Clear output with background color
-    for (int y = 0; y < output.height; ++y) {
-        for (int x = 0; x < output.width; ++x) {
-            writer->write(x, y, bg);
+    for (int y = 0; y < writer.height(); ++y) {
+        for (int x = 0; x < writer.width(); ++x) {
+            writer.write(x, y, bg);
         }
     }
 
     const std::string ramp = settings.characterSet.empty() ? std::string("@%#*+=-:. ") : settings.characterSet;
     const int nth = std::max(1, settings.renderEveryNthCell);
 
-    float cx = input.width / 2.0f;
-    float cy = input.height / 2.0f;
+    float cx = imageW / 2.0f;
+    float cy = imageH / 2.0f;
     bool hasRotation = std::abs(settings.rotationDegrees) > 0.001f;
     float rad = settings.rotationDegrees * (3.1415926535f / 180.0f);
     float cosR = std::cos(rad);
@@ -193,8 +200,8 @@ void RenderEngine::render8(const Image8& input, Image8& output, const RenderSett
                 int ix = static_cast<int>(std::round(sx));
                 int iy = static_cast<int>(std::round(sy));
 
-                if (ix >= 0 && ix < input.width && iy >= 0 && iy < input.height) {
-                    LinearRgba p = reader->read(ix, iy);
+                if (ix >= 0 && ix < imageW && iy >= 0 && iy < imageH) {
+                    LinearRgba p = reader.read(ix, iy);
                     lumSum += luminance(p);
                     redSum += p.r;
                     greenSum += p.g;
@@ -247,21 +254,18 @@ void RenderEngine::render8(const Image8& input, Image8& output, const RenderSett
             int drawW = static_cast<int>(std::round(cell.cellW));
             int drawH = static_cast<int>(std::round(cell.cellH));
 
-            drawGlyph(*writer, drawX, drawY, drawW, drawH, ramp[charIndex], ink, base, settings);
+            drawGlyph(writer, drawX, drawY, drawW, drawH, ramp[charIndex], ink, base, settings);
         }
     }
 
     // Handle blend with original
     if (settings.blendWithOriginal > 0.0f) {
-        auto outReader = createReader(HostPixelFormat::Argb8, outView);
-        if (outReader) {
-            float blend = std::max(0.0f, std::min(1.0f, settings.blendWithOriginal));
-            for (int y = 0; y < output.height; ++y) {
-                for (int x = 0; x < output.width; ++x) {
-                    LinearRgba outColor = outReader->read(x, y);
-                    LinearRgba inColor = reader->read(x, y);
-                    writer->write(x, y, mix(outColor, inColor, blend));
-                }
+        float blend = std::max(0.0f, std::min(1.0f, settings.blendWithOriginal));
+        for (int y = 0; y < writer.height(); ++y) {
+            for (int x = 0; x < writer.width(); ++x) {
+                LinearRgba outColor = writer.read(x, y);
+                LinearRgba inColor = reader.read(x, y);
+                writer.write(x, y, mix(outColor, inColor, blend));
             }
         }
     }
