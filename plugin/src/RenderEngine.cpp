@@ -1,41 +1,28 @@
 #include "RenderEngine.h"
 #include "GlyphAtlas.h"
+#include "PixelAdapter.h"
+#include "GridLayout.h"
 
 #include <algorithm>
 #include <cmath>
 
 namespace ascii_character {
+
 namespace {
 
-float clamp01(float v) {
-    return std::max(0.0f, std::min(1.0f, v));
-}
-
-uint8_t toByte(float v) {
-    return static_cast<uint8_t>(std::lround(clamp01(v) * 255.0f));
-}
-
-Pixel8 getPixel(const Image8& image, int x, int y) {
-    x = std::max(0, std::min(image.width - 1, x));
-    y = std::max(0, std::min(image.height - 1, y));
-    const auto* row = reinterpret_cast<const uint8_t*>(image.pixels) + y * image.rowbytes;
-    return reinterpret_cast<const Pixel8*>(row)[x];
-}
-
-Pixel8& pixelAt(Image8& image, int x, int y) {
-    auto* row = reinterpret_cast<uint8_t*>(image.pixels) + y * image.rowbytes;
-    return reinterpret_cast<Pixel8*>(row)[x];
+LinearRgba toLinear(const Pixel8& p) {
+    return {p.r / 255.0f, p.g / 255.0f, p.b / 255.0f, p.a / 255.0f};
 }
 
 } // namespace
 
-float RenderEngine::luminance(const Pixel8& pixel) {
-    return (0.2126f * pixel.r + 0.7152f * pixel.g + 0.0722f * pixel.b) / 255.0f;
+float RenderEngine::luminance(const LinearRgba& pixel) {
+    return 0.2126f * pixel.r + 0.7152f * pixel.g + 0.0722f * pixel.b;
 }
 
 float RenderEngine::adjustLuminance(float value, const RenderSettings& settings) {
     value = (value - 0.5f) * settings.contrast + 0.5f + settings.brightness;
-    value = clamp01(value);
+    value = std::max(0.0f, std::min(1.0f, value));
     if (settings.gamma > 0.001f) {
         value = std::pow(value, 1.0f / settings.gamma);
     }
@@ -49,64 +36,47 @@ float RenderEngine::adjustLuminance(float value, const RenderSettings& settings)
     return settings.invertLuminance ? 1.0f - value : value;
 }
 
-Pixel8 RenderEngine::mix(Pixel8 a, Pixel8 b, float t) {
-    t = clamp01(t);
+LinearRgba RenderEngine::mix(const LinearRgba& a, const LinearRgba& b, float t) {
+    t = std::max(0.0f, std::min(1.0f, t));
     return {
-        toByte((a.r / 255.0f) * (1.0f - t) + (b.r / 255.0f) * t),
-        toByte((a.g / 255.0f) * (1.0f - t) + (b.g / 255.0f) * t),
-        toByte((a.b / 255.0f) * (1.0f - t) + (b.b / 255.0f) * t),
-        toByte((a.a / 255.0f) * (1.0f - t) + (b.a / 255.0f) * t)
+        a.r * (1.0f - t) + b.r * t,
+        a.g * (1.0f - t) + b.g * t,
+        a.b * (1.0f - t) + b.b * t,
+        a.a * (1.0f - t) + b.a * t
     };
 }
 
-Pixel8 RenderEngine::chooseInk(const Pixel8& sample, float lum, const RenderSettings& settings) {
-    switch (settings.colorMode) {
+LinearRgba RenderEngine::chooseInk(const LinearRgba& sample, float luminance,
+                                    const LinearRgba& fg, const LinearRgba& bg,
+                                    const LinearRgba& gStart, const LinearRgba& gEnd,
+                                    ColorMode mode) {
+    switch (mode) {
     case ColorMode::Source:
         return sample;
     case ColorMode::TwoTone:
-        return lum < 0.5f ? settings.background : settings.foreground;
+        return luminance < 0.5f ? bg : fg;
     case ColorMode::Gradient:
-        return mix(settings.gradientStart, settings.gradientEnd, lum);
+        return mix(gStart, gEnd, luminance);
     case ColorMode::CustomForegroundBackground:
     case ColorMode::Monochrome:
     default:
-        return settings.foreground;
+        return fg;
     }
 }
 
-uint8_t RenderEngine::glyphCoverage(char c, int x, int y, int w, int h) {
-    const float nx = (x + 0.5f) / std::max(1, w);
-    const float ny = (y + 0.5f) / std::max(1, h);
-    const float cx = std::abs(nx - 0.5f);
-    const float cy = std::abs(ny - 0.5f);
-    const int density = std::max(1, static_cast<int>(c));
-    const bool vertical = ((density >> 0) & 1) && cx < 0.08f;
-    const bool horizontal = ((density >> 1) & 1) && cy < 0.08f;
-    const bool diagA = ((density >> 2) & 1) && std::abs(nx - ny) < 0.10f;
-    const bool diagB = ((density >> 3) & 1) && std::abs((1.0f - nx) - ny) < 0.10f;
-    const bool box = ((density >> 4) & 1) && (cx > 0.34f || cy > 0.34f);
-    const bool dot = ((density >> 5) & 1) && (cx * cx + cy * cy) < 0.055f;
-    return (vertical || horizontal || diagA || diagB || box || dot) ? 255 : 0;
-}
-
-void RenderEngine::fillRect(Image8& image, int x0, int y0, int x1, int y1, Pixel8 color) {
-    x0 = std::max(0, x0);
-    y0 = std::max(0, y0);
-    x1 = std::min(image.width, x1);
-    y1 = std::min(image.height, y1);
-    for (int y = y0; y < y1; ++y) {
-        for (int x = x0; x < x1; ++x) {
-            pixelAt(image, x, y) = color;
-        }
-    }
-}
-
-void RenderEngine::drawGlyph(Image8& image, int x, int y, int w, int h, char c, Pixel8 ink, Pixel8 base, const RenderSettings& settings) {
+void RenderEngine::drawGlyph(PixelWriter& writer, int x, int y, int w, int h, char c,
+                              const LinearRgba& ink, const LinearRgba& base, const RenderSettings& settings) {
     const int glyphW = std::max(1, static_cast<int>(w * settings.characterScale));
     const int glyphH = std::max(1, static_cast<int>(h * settings.characterScale));
     const int gx0 = x + (w - glyphW) / 2;
     const int gy0 = y + (h - glyphH) / 2;
-    fillRect(image, x, y, x + w, y + h, base);
+    
+    // Fill the background of the cell
+    for (int cellY = y; cellY < y + h; ++cellY) {
+        for (int cellX = x; cellX < x + w; ++cellX) {
+            writer.write(cellX, cellY, base);
+        }
+    }
     
     const auto& atlas = GlyphAtlas::builtIn();
     
@@ -120,9 +90,7 @@ void RenderEngine::drawGlyph(Image8& image, int x, int y, int w, int h, char c, 
             }
             const int ox = gx0 + px;
             const int oy = gy0 + py;
-            if (ox >= 0 && oy >= 0 && ox < image.width && oy < image.height) {
-                pixelAt(image, ox, oy) = mix(base, ink, cov);
-            }
+            writer.write(ox, oy, mix(base, ink, cov));
         }
     }
 }
@@ -132,64 +100,154 @@ void RenderEngine::render8(const Image8& input, Image8& output, const RenderSett
         return;
     }
 
-    const int columns = std::max(4, settings.pixelDensity);
-    const int cellW = std::max(2, input.width / columns);
-    const int cellH = std::max(2, static_cast<int>(cellW / std::max(0.1f, settings.cellAspectRatio)));
-    const int stepW = std::max(1, static_cast<int>(cellW * settings.spacingX));
-    const int stepH = std::max(1, static_cast<int>(cellH * settings.spacingY));
+    ImageView inView { input.width, input.height, input.rowbytes, input.pixels };
+    ImageView outView { output.width, output.height, output.rowbytes, output.pixels };
+    auto reader = createReader(HostPixelFormat::Argb8, inView);
+    auto writer = createWriter(HostPixelFormat::Argb8, outView);
+    if (!reader || !writer) {
+        return;
+    }
+
+    // Convert settings colors to linear
+    LinearRgba fg = toLinear(settings.foreground);
+    LinearRgba bg = toLinear(settings.background);
+    LinearRgba gStart = toLinear(settings.gradientStart);
+    LinearRgba gEnd = toLinear(settings.gradientEnd);
+
+    // Initialize layout
+    GridLayout layout(input.width, input.height, settings);
+
+    // Clear output with background color
+    for (int y = 0; y < output.height; ++y) {
+        for (int x = 0; x < output.width; ++x) {
+            writer->write(x, y, bg);
+        }
+    }
+
     const std::string ramp = settings.characterSet.empty() ? std::string("@%#*+=-:. ") : settings.characterSet;
     const int nth = std::max(1, settings.renderEveryNthCell);
 
-    fillRect(output, 0, 0, output.width, output.height, settings.background);
+    float cx = input.width / 2.0f;
+    float cy = input.height / 2.0f;
+    bool hasRotation = std::abs(settings.rotationDegrees) > 0.001f;
+    float rad = settings.rotationDegrees * (3.1415926535f / 180.0f);
+    float cosR = std::cos(rad);
+    float sinR = std::sin(rad);
 
     int cellIndex = 0;
-    for (int y = settings.offsetY; y < input.height; y += stepH) {
-        for (int x = settings.offsetX; x < input.width; x += stepW, ++cellIndex) {
+    for (int r = 0; r < layout.rows(); ++r) {
+        for (int c = 0; c < layout.columns(); ++c, ++cellIndex) {
             if (cellIndex % nth != 0) {
                 continue;
             }
 
+            GridCell cell = layout.cell(c, r);
+            if (!cell.active) {
+                continue;
+            }
+
+            // Determine sample points for the cell
+            std::vector<std::pair<float, float>> samplePoints;
+            float x0 = cell.centerX - cell.cellW / 2.0f;
+            float y0 = cell.centerY - cell.cellH / 2.0f;
+
+            if (settings.quality == Quality::Draft) {
+                samplePoints.push_back({cell.centerX, cell.centerY});
+            } else if (settings.quality == Quality::Normal) {
+                float offsets[2] = {0.25f, 0.75f};
+                for (float dy : offsets) {
+                    for (float dx : offsets) {
+                        samplePoints.push_back({x0 + dx * cell.cellW, y0 + dy * cell.cellH});
+                    }
+                }
+            } else { // High
+                float offsets[3] = {1.0f / 6.0f, 0.5f, 5.0f / 6.0f};
+                for (float dy : offsets) {
+                    for (float dx : offsets) {
+                        samplePoints.push_back({x0 + dx * cell.cellW, y0 + dy * cell.cellH});
+                    }
+                }
+            }
+
+            // Sample input and accumulate
             float lumSum = 0.0f;
-            int redSum = 0;
-            int greenSum = 0;
-            int blueSum = 0;
-            int alphaMax = 0;
+            float redSum = 0.0f;
+            float greenSum = 0.0f;
+            float blueSum = 0.0f;
+            float alphaMax = 0.0f;
             int count = 0;
-            Pixel8 sourceAverage {};
-            for (int sy = y; sy < std::min(input.height, y + cellH); ++sy) {
-                for (int sx = x; sx < std::min(input.width, x + cellW); ++sx) {
-                    const Pixel8 p = getPixel(input, sx, sy);
+
+            for (const auto& pt : samplePoints) {
+                float sx = pt.first;
+                float sy = pt.second;
+
+                // Apply rotation about the image center if enabled
+                if (hasRotation) {
+                    float dx = sx - cx;
+                    float dy = sy - cy;
+                    sx = cx + dx * cosR - dy * sinR;
+                    sy = cy + dx * sinR + dy * cosR;
+                }
+
+                int ix = static_cast<int>(std::round(sx));
+                int iy = static_cast<int>(std::round(sy));
+
+                if (ix >= 0 && ix < input.width && iy >= 0 && iy < input.height) {
+                    LinearRgba p = reader->read(ix, iy);
                     lumSum += luminance(p);
                     redSum += p.r;
                     greenSum += p.g;
                     blueSum += p.b;
-                    alphaMax = std::max(alphaMax, static_cast<int>(p.a));
+                    alphaMax = std::max(alphaMax, p.a);
                     ++count;
                 }
             }
+
+            LinearRgba sourceAverage {};
             if (count > 0) {
-                sourceAverage.r = static_cast<uint8_t>(redSum / count);
-                sourceAverage.g = static_cast<uint8_t>(greenSum / count);
-                sourceAverage.b = static_cast<uint8_t>(blueSum / count);
-                sourceAverage.a = static_cast<uint8_t>(alphaMax);
+                sourceAverage.r = redSum / count;
+                sourceAverage.g = greenSum / count;
+                sourceAverage.b = blueSum / count;
+                sourceAverage.a = alphaMax;
             }
 
-            const float lum = adjustLuminance(count > 0 ? lumSum / count : 0.0f, settings);
-            const float ordered = settings.order == CharacterOrder::DarkToLight ? lum : 1.0f - lum;
-            const size_t charIndex = static_cast<size_t>(std::round(clamp01(ordered) * static_cast<float>(ramp.size() - 1)));
-            Pixel8 ink = chooseInk(sourceAverage, lum, settings);
+            float rawLum = count > 0 ? lumSum / count : 0.0f;
+            float lum = adjustLuminance(rawLum, settings);
+            float ordered = settings.order == CharacterOrder::DarkToLight ? lum : 1.0f - lum;
+            
+            float clampedOrdered = std::max(0.0f, std::min(1.0f, ordered));
+            size_t charIndex = static_cast<size_t>(std::round(clampedOrdered * static_cast<float>(ramp.size() - 1)));
+
+            LinearRgba ink = chooseInk(sourceAverage, lum, fg, bg, gStart, gEnd, settings.colorMode);
             if (settings.preserveSourceAlpha) {
                 ink.a = sourceAverage.a;
             }
-            Pixel8 base = settings.colorMode == ColorMode::CustomForegroundBackground ? settings.background : Pixel8 {0, 0, 0, static_cast<uint8_t>(settings.preserveSourceAlpha ? sourceAverage.a : 255)};
-            drawGlyph(output, x, y, cellW, cellH, ramp[charIndex], ink, base, settings);
+
+            LinearRgba base = (settings.colorMode == ColorMode::CustomForegroundBackground) 
+                ? bg 
+                : LinearRgba {0.0f, 0.0f, 0.0f, settings.preserveSourceAlpha ? sourceAverage.a : 1.0f};
+
+            // Draw glyph relative to layout position
+            int drawX = static_cast<int>(std::round(x0));
+            int drawY = static_cast<int>(std::round(y0));
+            int drawW = static_cast<int>(std::round(cell.cellW));
+            int drawH = static_cast<int>(std::round(cell.cellH));
+
+            drawGlyph(*writer, drawX, drawY, drawW, drawH, ramp[charIndex], ink, base, settings);
         }
     }
 
+    // Handle blend with original
     if (settings.blendWithOriginal > 0.0f) {
-        for (int y = 0; y < output.height; ++y) {
-            for (int x = 0; x < output.width; ++x) {
-                pixelAt(output, x, y) = mix(pixelAt(output, x, y), getPixel(input, x, y), settings.blendWithOriginal);
+        auto outReader = createReader(HostPixelFormat::Argb8, outView);
+        if (outReader) {
+            float blend = std::max(0.0f, std::min(1.0f, settings.blendWithOriginal));
+            for (int y = 0; y < output.height; ++y) {
+                for (int x = 0; x < output.width; ++x) {
+                    LinearRgba outColor = outReader->read(x, y);
+                    LinearRgba inColor = reader->read(x, y);
+                    writer->write(x, y, mix(outColor, inColor, blend));
+                }
             }
         }
     }

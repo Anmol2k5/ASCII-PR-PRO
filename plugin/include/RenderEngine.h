@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "RenderTypes.h"
 
 namespace ascii_character {
 
@@ -23,6 +24,8 @@ struct Image8 {
 enum class CharacterOrder { DarkToLight = 0, LightToDark = 1 };
 enum class ColorMode { Source = 0, Monochrome, TwoTone, Gradient, CustomForegroundBackground };
 enum class Quality { Draft = 0, Normal, High };
+enum class GridAlignHorizontal { Left = 0, Center, Right };
+enum class GridAlignVertical { Top = 0, Center, Bottom };
 
 struct RenderSettings {
     int pixelDensity = 90;
@@ -50,6 +53,8 @@ struct RenderSettings {
     float hueShiftDegrees = 0.0f;
     float saturation = 1.0f;
 
+    GridAlignHorizontal horizontalAlign = GridAlignHorizontal::Center;
+    GridAlignVertical verticalAlign = GridAlignVertical::Center;
     int offsetX = 0;
     int offsetY = 0;
     float rotationDegrees = 0.0f;
@@ -58,18 +63,23 @@ struct RenderSettings {
     int renderEveryNthCell = 1;
 };
 
+class PixelWriter;
+class PixelReader;
+
 class RenderEngine {
 public:
     void render8(const Image8& input, Image8& output, const RenderSettings& settings) const;
 
 private:
-    static float luminance(const Pixel8& pixel);
+    static float luminance(const LinearRgba& pixel);
     static float adjustLuminance(float value, const RenderSettings& settings);
-    static Pixel8 mix(Pixel8 a, Pixel8 b, float t);
-    static Pixel8 chooseInk(const Pixel8& sample, float luminance, const RenderSettings& settings);
-    static uint8_t glyphCoverage(char c, int x, int y, int w, int h);
-    static void fillRect(Image8& image, int x0, int y0, int x1, int y1, Pixel8 color);
-    static void drawGlyph(Image8& image, int x, int y, int w, int h, char c, Pixel8 ink, Pixel8 base, const RenderSettings& settings);
+    static LinearRgba mix(const LinearRgba& a, const LinearRgba& b, float t);
+    static LinearRgba chooseInk(const LinearRgba& sample, float luminance,
+                                const LinearRgba& fg, const LinearRgba& bg,
+                                const LinearRgba& gStart, const LinearRgba& gEnd,
+                                ColorMode mode);
+    static void drawGlyph(PixelWriter& writer, int x, int y, int w, int h, char c,
+                          const LinearRgba& ink, const LinearRgba& base, const RenderSettings& settings);
 };
 
 } // namespace ascii_character

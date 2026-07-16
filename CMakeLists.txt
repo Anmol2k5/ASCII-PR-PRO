@@ -21,6 +21,7 @@ set(ASCII_CHARACTER_CORE
     plugin/src/Utilities.cpp
     plugin/src/PixelAdapter.cpp
     plugin/src/GlyphAtlas.cpp
+    plugin/src/GridLayout.cpp
 )
 
 if (ASCII_CHARACTER_BUILD_PLUGIN)
@@ -76,4 +77,11 @@ if (ASCII_CHARACTER_BUILD_TESTS)
     )
     target_include_directories(test_pixel_adapter PRIVATE plugin/include)
     target_compile_definitions(test_pixel_adapter PRIVATE TESTS_NO_AE_SDK=1)
+
+    add_executable(test_grid_layout
+        tests/unit/test_grid_layout.cpp
+        plugin/src/GridLayout.cpp
+    )
+    target_include_directories(test_grid_layout PRIVATE plugin/include)
+    target_compile_definitions(test_grid_layout PRIVATE TESTS_NO_AE_SDK=1)
 endif()

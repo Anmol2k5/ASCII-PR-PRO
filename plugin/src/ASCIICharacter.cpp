@@ -141,8 +141,11 @@ static RenderSettings settingsFromParams(PF_ParamDef* params[]) {
     s.gradientStart = colorFromParam(*params[PARAM_GRADIENT_START]);
     s.gradientEnd = colorFromParam(*params[PARAM_GRADIENT_END]);
     s.saturation = params[PARAM_SATURATION]->u.fs_d.value / 100.0f;
+    s.horizontalAlign = static_cast<GridAlignHorizontal>(params[PARAM_HORIZONTAL_ALIGN]->u.pd.value - 1);
+    s.verticalAlign = static_cast<GridAlignVertical>(params[PARAM_VERTICAL_ALIGN]->u.pd.value - 1);
     s.offsetX = params[PARAM_OFFSET_X]->u.sd.value;
     s.offsetY = params[PARAM_OFFSET_Y]->u.sd.value;
+    s.rotationDegrees = params[PARAM_ROTATION]->u.ad.value / 65536.0f;
     s.quality = static_cast<Quality>(params[PARAM_QUALITY]->u.pd.value - 1);
     s.antiAlias = params[PARAM_ANTIALIAS]->u.bd.value != 0;
     s.renderEveryNthCell = params[PARAM_NTH_CELL]->u.sd.value;
