@@ -1,4 +1,5 @@
 #include "RenderEngine.h"
+#include "GlyphAtlas.h"
 
 #include <algorithm>
 #include <cmath>
@@ -106,16 +107,21 @@ void RenderEngine::drawGlyph(Image8& image, int x, int y, int w, int h, char c, 
     const int gx0 = x + (w - glyphW) / 2;
     const int gy0 = y + (h - glyphH) / 2;
     fillRect(image, x, y, x + w, y + h, base);
+    
+    const auto& atlas = GlyphAtlas::builtIn();
+    
     for (int py = 0; py < glyphH; ++py) {
         for (int px = 0; px < glyphW; ++px) {
-            const uint8_t coverage = glyphCoverage(c, px, py, glyphW, glyphH);
-            if (!coverage) {
+            float nx = static_cast<float>(px) / std::max(1, glyphW - 1);
+            float ny = static_cast<float>(py) / std::max(1, glyphH - 1);
+            float cov = atlas.coverage(c, nx, ny, settings.antiAlias);
+            if (cov < 1e-4f) {
                 continue;
             }
             const int ox = gx0 + px;
             const int oy = gy0 + py;
             if (ox >= 0 && oy >= 0 && ox < image.width && oy < image.height) {
-                pixelAt(image, ox, oy) = ink;
+                pixelAt(image, ox, oy) = mix(base, ink, cov);
             }
         }
     }

@@ -20,6 +20,7 @@ set(ASCII_CHARACTER_CORE
     plugin/src/ColorPalettes.cpp
     plugin/src/Utilities.cpp
     plugin/src/PixelAdapter.cpp
+    plugin/src/GlyphAtlas.cpp
 )
 
 if (ASCII_CHARACTER_BUILD_PLUGIN)
