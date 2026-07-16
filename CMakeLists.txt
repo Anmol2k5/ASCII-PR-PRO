@@ -19,6 +19,7 @@ set(ASCII_CHARACTER_CORE
     plugin/src/CharacterSets.cpp
     plugin/src/ColorPalettes.cpp
     plugin/src/Utilities.cpp
+    plugin/src/PixelAdapter.cpp
 )
 
 if (ASCII_CHARACTER_BUILD_PLUGIN)
@@ -66,4 +67,12 @@ if (ASCII_CHARACTER_BUILD_TESTS)
         ${ASCII_CHARACTER_CORE}
     )
     target_include_directories(render_engine_smoke PRIVATE plugin/include)
+    target_compile_definitions(render_engine_smoke PRIVATE TESTS_NO_AE_SDK=1)
+
+    add_executable(test_pixel_adapter
+        tests/unit/test_pixel_adapter.cpp
+        plugin/src/PixelAdapter.cpp
+    )
+    target_include_directories(test_pixel_adapter PRIVATE plugin/include)
+    target_compile_definitions(test_pixel_adapter PRIVATE TESTS_NO_AE_SDK=1)
 endif()
