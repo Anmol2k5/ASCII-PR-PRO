@@ -96,4 +96,12 @@ if (ASCII_CHARACTER_BUILD_TESTS)
     )
     target_include_directories(test_color_controls PRIVATE plugin/include)
     add_test(NAME test_color_controls COMMAND test_color_controls)
+
+    add_executable(test_performance
+        tests/unit/test_performance.cpp
+        ${ASCII_CHARACTER_CORE}
+    )
+    target_include_directories(test_performance PRIVATE plugin/include)
+    target_compile_definitions(test_performance PRIVATE TESTS_NO_AE_SDK=1)
+    add_test(NAME test_performance COMMAND test_performance)
 endif()
